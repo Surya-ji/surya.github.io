@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineVault - Watch Free</title>
+  <style>
+    :root {
+      --primary: #9146ff;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #141414;
+      color: white;
+      overflow-x: hidden;
+    }
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: rgba(20,20,20,0.95);
+      padding: 15px 30px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      z-index: 100;
+      flex-wrap: wrap;
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    .search-bar {
+      flex: 1;
+      max-width: 500px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 30px;
+      background: #333;
+      color: white;
+      font-size: 1rem;
+    }
+    .color-picker {
+      padding: 8px;
+      background: #333;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .hero {
+      height: 85vh;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      padding: 0 40px;
+      position: relative;
+    }
+    .hero-content { max-width: 650px; z-index: 2; }
+    .hero h1 { font-size: 3.8rem; margin-bottom: 15px; }
+    .hero p { font-size: 1.4rem; margin-bottom: 25px; }
+    button {
+      padding: 14px 36px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 15px;
+    }
+    .btn-play { background: white; color: black; font-weight: bold; }
+
+    .row {
+      padding: 30px 40px 20px;
+    }
+    .row h2 {
+      margin-bottom: 18px;
+      font-size: 1.8rem;
+    }
+    .posters {
+      display: flex;
+      gap: 15px;
+      overflow-x: auto;
+      padding-bottom: 20px;
+      scrollbar-width: none;
+    }
+    .poster {
+      width: 200px;
+      border-radius: 10px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    .poster:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px rgba(145, 70, 255, 0.7);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.98);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      width: 95%;
+      max-width: 1300px;
+      position: relative;
+    }
+    .close {
+      position: absolute;
+      top: -55px;
+      right: 20px;
+      font-size: 50px;
+      cursor: pointer;
+      color: #fff;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2.8rem; }
+      .poster { width: 160px; }
+      header { padding: 12px 15px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">CineVault</div>
+    <input type="text" id="searchInput" class="search-bar" placeholder="Search movies or TV shows..." onkeyup="filterContent()">
+    <input type="color" id="colorPicker" class="color-picker" value="#9146ff" onchange="changeColor(this.value)">
+  </header>
+
+  <!-- Hero -->
+  <div class="hero" style="background-image: url('https://image.tmdb.org/t/p/original/8f5a9n8yK8z9z8f5a9n8yK8z9z.jpg');">
+    <div class="hero-content">
+      <h1>Dune: Prophecy</h1>
+      <p>Epic sci-fi series has begun</p>
+      <button class="btn-play" onclick="playContent(1011985, 'tv', 1, 1)">▶ Watch Now</button>
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="row">
+    <h2>Trending Now</h2>
+    <div class="posters" id="row-trending">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <div class="row">
+    <h2>Popular Movies</h2>
+    <div class="posters" id="row-movies">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <div class="row">
+    <h2>Top TV Shows</h2>
+    <div class="posters" id="row-tv">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <div class="row">
+    <h2>Action Movies</h2>
+    <div class="posters" id="row-action">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Player Modal -->
+  <div id="playerModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closePlayer()">×</span>
+      <iframe id="vidkingPlayer" width="100%" height="720" frameborder="0" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Content Database
+    const content = [
+      {id: 1011985, type: 'tv', title: "Dune: Prophecy", img: "https://image.tmdb.org/t/p/w500/8f5a9n8yK8z9z8f5a9n8yK8z9z.jpg", season:1, episode:1},
+      {id: 693134, type: 'movie', title: "Dune: Part Two", img: "https://image.tmdb.org/t/p/w500/9cqNxx0GxF0bflZmeSMuL5tnGFr.jpg"},
+      {id: 558449, type: 'movie', title: "Gladiator II", img: "https://image.tmdb.org/t/p/w500/1XDDXPXGiSTvUThkX1k4m8z8f5a.jpg"},
+      {id: 1078605, type: 'movie', title: "Deadpool & Wolverine", img: "https://image.tmdb.org/t/p/w500/5a4JdoFwll5DRtKMe7J0VzhZ4rR.jpg"},
+      {id: 1241982, type: 'movie', title: "Moana 2", img: "https://image.tmdb.org/t/p/w500/7fn624k9Z5f9z8f5a9n8yK8z9z.jpg"},
+      {id: 1396, type: 'tv', title: "Breaking Bad", img: "https://image.tmdb.org/t/p/w500/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg", season:1, episode:1},
+      {id: 60574, type: 'tv', title: "The Boys", img: "https://image.tmdb.org/t/p/w500/stKGOm8UyhuLPR9sZLjs5AboUyT.jpg", season:1, episode:1},
+      {id: 93405, type: 'tv', title: "Squid Game", img: "https://image.tmdb.org/t/p/w500/dDlEmu3EZ0Pgg93K2SVNLCjCSvE.jpg", season:1, episode:1}
+    ];
+
+    // Populate rows
+    function populateRows() {
+      document.getElementById('row-trending').innerHTML = content.map(item => 
+        `<img src="${item.img}" class="poster" onclick="playContent(${item.id}, '${item.type}', ${item.season||1}, ${item.episode||1})" alt="${item.title}">`
+      ).join('');
+
+      document.getElementById('row-movies').innerHTML = content.filter(i => i.type==='movie').map(item => 
+        `<img src="${item.img}" class="poster" onclick="playContent(${item.id}, 'movie')" alt="${item.title}">`
+      ).join('');
+
+      document.getElementById('row-tv').innerHTML = content.filter(i => i.type==='tv').map(item => 
+        `<img src="${item.img}" class="poster" onclick="playContent(${item.id}, 'tv', 1, 1)" alt="${item.title}">`
+      ).join('');
+
+      document.getElementById('row-action').innerHTML = content.slice(0,5).map(item => 
+        `<img src="${item.img}" class="poster" onclick="playContent(${item.id}, '${item.type}', ${item.season||1}, ${item.episode||1})" alt="${item.title}">`
+      ).join('');
+    }
+
+    function playContent(id, type, season=1, episode=1) {
+      let url;
+      if (type === 'tv') {
+        url = `https://www.vidking.net/embed/tv/${id}/${season}/${episode}?color=${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim().replace('#','')}&autoPlay=true&nextEpisode=true&episodeSelector=true`;
+      } else {
+        url = `https://www.vidking.net/embed/movie/${id}?color=${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim().replace('#','')}&autoPlay=true`;
+      }
+      document.getElementById('vidkingPlayer').src = url;
+      document.getElementById('playerModal').style.display = 'flex';
+    }
+
+    function closePlayer() {
+      const modal = document.getElementById('playerModal');
+      const iframe = document.getElementById('vidkingPlayer');
+      iframe.src = '';
+      modal.style.display = 'none';
+    }
+
+    function changeColor(color) {
+      document.documentElement.style.setProperty('--primary', color);
+    }
+
+    function filterContent() {
+      const term = document.getElementById('searchInput').value.toLowerCase();
+      const allPosters = document.querySelectorAll('.posters');
+      
+      allPosters.forEach(row => {
+        const posters = row.getElementsByClassName('poster');
+        Array.from(posters).forEach(poster => {
+          const title = poster.getAttribute('alt').toLowerCase();
+          poster.style.display = title.includes(term) ? 'block' : 'none';
+        });
+      });
+    }
+
+    // Initialize
+    window.onload = populateRows;
+
+    // Close with ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === "Escape") closePlayer();
+    });
+  </script>
+</body>
+</html>
